@@ -1,0 +1,277 @@
+// constants and variables:
+
+var cellArr = new Array(16).fill(null).map(()=>new Array(30).fill(null));
+const height = 16;
+const width = 30;
+const numCells = height * width;
+var numBombs = 99;
+var numRevealed = 0;
+var whosTurn = 1;
+var redFlags = 0;
+var blueFlags = 0;
+
+var stage = document.getElementById("#stage");
+var output = document.getElementById("#output");
+
+
+// main program execution:
+initializeCellArr();
+generateBombs();
+loadBoard();
+
+
+//functions:
+
+//array with all cells on board
+function initializeCellArr() {
+  for(i = 0; i < height; ++i) {
+    for(j = 0; j < width; ++j) {
+      cellArr[i][j] = new makeCell();
+    }
+  }
+}
+
+// constructor(?) thing that makes cells
+function makeCell() {
+  this.bomb = false;
+  this.revealed = false;
+  this.flagged = false;
+  this.neighbors = 0;
+  this.blueFlag = false;
+  this.redFlag = false;
+}
+
+// switches the current player
+function switchPlayers() {
+  if(whosTurn === 1) {
+    whosTurn = 2;
+    var textElem = document.getElementById("#gameInfoText");
+    textElem.innerHTML = ("It's player " + whosTurn + "'s turn.");
+    return;
+  }
+  if(whosTurn === 2) {
+    whosTurn = 1;
+    var textElem = document.getElementById("#gameInfoText");
+    textElem.innerHTML = ("It's player " + whosTurn + "'s turn.");
+    return;
+  }
+}
+
+// randomly distribute bombs into the board
+function generateBombs() {
+  numB = numBombs;
+  while(numB > 0) {
+    // get a random row
+    tempR = Math.floor(Math.random() * (height));
+    // get a random col
+    tempC = Math.floor(Math.random() * (width));
+
+    // if the cell we randomly chose already has a bomb, we skip
+    //   to choosing another
+    if(cellArr[tempR][tempC].bomb === true) continue;
+
+    // cell gets a bomb
+    cellArr[tempR][tempC].bomb = true;
+
+    // add one to the count for all neighbours
+    if(tempR < (height - 1)) {
+      cellArr[tempR+1][tempC].neighbors += 1;
+      if(tempC < (width - 1)) cellArr[tempR+1][tempC+1].neighbors += 1;
+      if(tempC > 0) cellArr[tempR+1][tempC-1].neighbors += 1;
+    }
+    if(tempR > 0) {
+      cellArr[tempR-1][tempC].neighbors += 1;
+      if(tempC < (width - 1)) cellArr[tempR-1][tempC+1].neighbors += 1;
+      if(tempC > 0) cellArr[tempR-1][tempC-1].neighbors += 1;
+    }
+    if(tempC < (width - 1)) cellArr[tempR][tempC+1].neighbors += 1;
+    if(tempC > 0) cellArr[tempR][tempC-1].neighbors += 1;
+
+    --numB; // we have one less bomb to place
+  }
+}
+
+// put the images on the grid
+function loadBoard() {
+  numRevealed = 0;
+  whosTurn = 1;
+  for(i = 0; i < height; ++i) {
+    for(j = 0; j < width; ++j) {
+      var cell = document.createElement("img");
+      cell.setAttribute("class", "cell");
+      cell.setAttribute("id", i + " " + j);
+      cell.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log("left click " + e.path[0].id);
+        switchImgLeftClick(e.path[0], false);
+      }, false);
+      cell.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        console.log("right click " + e.path[0].id);
+        switchImgRightClick(e.path[0]);
+      }, false);
+      stage.appendChild(cell);
+
+      cell.src = "images/blank.gif";
+
+      cell.style.top = i * 24 + "px";
+      cell.style.left = j * 24 + "px";
+    }
+  }
+  for(i = 0; i < height; ++i) {
+    for(j = 0; j < width; ++j) {
+      var temp = document.getElementById(i + " " + j);
+      if((cellArr[i][j].neighbors === 0) && (cellArr[i][j].bomb === false)) {
+        switchImgLeftClick(temp);
+        return;
+      }
+    }
+  }
+}
+
+function switchImgLeftClick(imgElement, recursiveQ) {
+
+  var idTemp = imgElement.id.split(" ");
+  var row = idTemp[0];
+  var col = idTemp[1];
+
+  var cell = cellArr[parseInt(row)][parseInt(col)];
+
+  if(cell.revealed === true) return;
+  if(cell.flagged === true) return;
+  else if(cell.bomb === true) {
+    switchPlayers();
+    imgElement.setAttribute("src", "images/bombdeath.gif");
+    gameOver();
+    return;
+  }
+  else if(cell.neighbors > 0) {
+
+    imgElement.setAttribute("src", "images/open" + cell.neighbors + ".gif");
+    cell.revealed = true;
+    ++numRevealed;
+    checkWin();
+      if(recursiveQ === false) switchPlayers();
+  }
+  else if(cell.neighbors === 0) {
+    imgElement.setAttribute("src", "images/open0.gif");
+    cell.revealed = true;
+    ++numRevealed;
+    checkWin();
+    if((parseInt(row)) < (height - 1)) {
+      switchImgLeftClick(document.getElementById((parseInt(row)+1) + " " + parseInt(col), true));
+      if(parseInt(col) < (width - 1)) switchImgLeftClick(document.getElementById((parseInt(row)+1) + " " + (parseInt(col)+1), true));
+      if(parseInt(col) > 0) switchImgLeftClick(document.getElementById((parseInt(row)+1) + " " + (parseInt(col)-1), true));
+    }
+    if(parseInt(row) > 0) {
+      switchImgLeftClick(document.getElementById((parseInt(row)-1) + " " + parseInt(col), true));
+      if(parseInt(col) < (width - 1)) switchImgLeftClick(document.getElementById((parseInt(row)-1) + " " + (parseInt(col)+1), true));
+      if(parseInt(col) > 0) switchImgLeftClick(document.getElementById((parseInt(row)-1) + " " + (parseInt(col)-1), true));
+    }
+    if(parseInt(col) < (width - 1)) switchImgLeftClick(document.getElementById(parseInt(row) + " " + (parseInt(col)+1), true));
+    if(parseInt(col) > 0) switchImgLeftClick(document.getElementById(parseInt(row) + " " + (parseInt(col)-1), true));
+
+    if(recursiveQ === false) switchPlayers();
+  }
+}
+
+function switchImgRightClick(imgElement) {
+
+  var idTemp = imgElement.id.split(" ");
+  var row = idTemp[0];
+  var col = idTemp[1];
+
+  var cell = cellArr[parseInt(row)][parseInt(col)];
+
+  if(cell.revealed === true) return;
+  if(cell.flagged === false) {
+    if(whosTurn === 1) {
+      switchPlayers();
+      cell.flagged = true;
+      cell.redFlag = true;
+      ++redFlags;
+      imgElement.setAttribute("src", "images/bombflagged.gif");
+      return;
+    }
+    if(whosTurn === 2) {
+      switchPlayers();
+      cell.flagged = true;
+      cell.blueFlag = true;
+      ++blueFlags;
+      imgElement.setAttribute("src", "images/bombflagged2.gif");
+      return;
+    }
+  }
+  if(cell.flagged === true) {
+    if(whosTurn === 1) {
+      if(cell.blueFlag === true) return;
+      switchPlayers();
+      cell.flagged = false;
+      cell.redFlag = false;
+      --redFlags;
+      imgElement.setAttribute("src", "images/blank.gif");
+      return;
+    }
+    if(whosTurn === 2) {
+      if(cell.redFlag === true) return;
+      switchPlayers();
+      cell.flagged = false;
+      cell.blueFlag = false;
+      --blueFlags;
+      imgElement.setAttribute("src", "images/blank.gif");
+      return;
+    }
+  }
+}
+
+// function to check for end of game by win, and determines winner if so
+function checkWin() {
+  if((numCells - numBombs) === numRevealed) {
+    if(redFlags > blueFlags) {
+      var textElem = document.getElementById("#gameInfoText");
+      textElem.innerHTML = ("Board cleared! Player 1 wins!");
+    } else if(redFlags < blueFlags) {
+    var textElem = document.getElementById("#gameInfoText");
+    textElem.innerHTML = ("Board cleared! Player 2 wins!");
+    } else {
+    var textElem = document.getElementById("#gameInfoText");
+    textElem.innerHTML = ("Board cleared! It's a draw!");
+    }
+  }
+}
+
+// function to end the game in defeat
+async function gameOver() {
+  for (i = 0; i < height; i++){
+    for (j = 0; j < width; j++){
+
+      await sleep(1);
+
+      var imgElement = document.getElementById(i +" "+j);
+
+      var idTemp = imgElement.id.split(" ");
+      var row = idTemp[0];
+      var col = idTemp[1];
+
+      var cell = cellArr[parseInt(row)][parseInt(col)];
+      if(cell.revealed === true) continue;
+      else if(cell.bomb === true) {
+        imgElement.setAttribute("src", "images/bombdeath.gif");
+      }
+      else if(cell.neighbors > 0) {
+        imgElement.setAttribute("src", "images/open" + cell.neighbors + ".gif");
+        cell.revealed = true;
+      }
+      else if(cell.neighbors === 0) {
+        imgElement.setAttribute("src", "images/open0.gif");
+      }
+    }
+  }
+  var textElem = document.getElementById("#gameInfoText");
+  textElem.innerHTML = ("Game over! Player " + whosTurn + " wins!");
+}
+
+// stolen from https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

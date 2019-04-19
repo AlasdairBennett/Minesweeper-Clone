@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+  <head>
+    <meta charset="utf-8">
+    <title>Isaem - Minesweeper-ish</title>
+    <link rel = "stylesheet"
+          href = "https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css">
+    <link rel = "stylesheet" href = "stylesheets\styles.css">
+    <link rel = "stylesheet" href= "https://fonts.googleapis.com/css?family=Montserrat">
+    <link rel = "icon" href = "favicon.png" type = "image/x-icon">
+  </head>
+
+  <body>
+
+    <header class = "main-head">
+      <h1 class = "logo-text">Isaem</h1>
+    </header>
+
+    <div class = "navbar">
+      <a href = "index.html">Home</a>
+      <a href = "contact.html">Contact</a>
+      <a href = "about.html">About</a>
+      <a class = "active" href = "minesweeper.html">Minesweeper-ish</a>
+      <a href = "graphics.html">Graphics Examples</a>
+    </div>
+
+    <div class = "todoText">
+      <text>
+        <br>
+        <br>
+        <br>
+        Note: This is very much a WIP.<br>
+      </text>
+    </div>
+    <div id = "#gameInfoText" class = "minesweeperGameInfo">
+      It's player 1's turn.
+    </div>
+
+    <div class = "minesweeperStage">
+      <div id = "#stage" class = "stage"></div>
+      <p id = "#output" class = "output"></p>
+    </div>
+
+    <div class = "minesweeperText">
+      <text>
+        This is a two player variation of minesweeper.<br>
+        The goal is to flag the most mines by the end of the game.<br>
+        However, should you click a mine, you lose the game.<br>
+        In the current iteration of the game, it's only playable as hotseat.<br>
+        <br>
+        Currently the first move is automatic for bad luck protection.<br>
+        <br>
+        Further note: this is confirmed not to work on safari.<br>
+        If it isn't working for you, please use chrome!<br>
+      </text>
+    </div>
+
+    <script src="scripts/minesweeper.js"></script>
+  </body>
+
+</html>
